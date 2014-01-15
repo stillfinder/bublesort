@@ -1,0 +1,128 @@
+<?php
+// $Id$ 
+/** 
+* @file
+* Bublesort module
+*/
+
+function bublesort_menu(){
+	$items = array();
+	$items['bublesort'] = array(
+		'title' => 'Buble Sort',
+		'page callback' => 'print_bublesort_page',
+		'type' => MENU_NORMAL_ITEM,
+		'access callback' => TRUE,
+	);
+	return $items;
+}
+
+function print_bublesort_page() {
+	$page_text = '<p>Press Shuffle button for shuffle numbers.</p><p>And step button for step by step sorting</p><br>';
+	$form = drupal_get_form('bublesort_form');
+	$form = drupal_render($form);
+	return $page_text . $form;
+}
+
+function bublesort_form($form, &$form_state) {
+	$form=array();
+	
+	$form['result'] = array(
+		'#title' => 'Result',
+	    '#description' => 'decs.',
+	    '#prefix' => '<div id="canvas_result_div">', 
+	    '#suffix' => '</div>', 
+	);
+	
+	$form['shuffle'] = array(
+		'#type' => 'submit',
+		'#value' => t('Shuffle'),
+		'#name' => 'shuffle',
+		'#ajax' => array(
+			'callback' => 'shuffle_ajax_submit',
+			'wrapper' => 'canvas_result_div',
+		),
+	);
+	
+	$form['step'] = array(
+		'#type' => 'submit',
+		'#value' => t('Step'),
+		'#name' => 'step',		
+		'#ajax' => array(
+			'callback' => 'step_ajax_submit',
+			'wrapper' => 'canvas_result_div',
+		),
+	);
+	
+	return $form;
+}
+
+function shuffle_ajax_submit($form, &$form_state) {
+	$numbers = rand_range(0,100,10);
+	$_SESSION['numbers'] = $numbers;
+	$result = numbers_list_to_html($numbers);
+	return '<div id="canvas_result_div">'.$result.'</div>';
+}
+
+function step_ajax_submit($form, &$form_state) {
+	$numbers = $_SESSION['numbers'];
+	$change_index = sort_action($numbers);
+		if($change_index !== NULL) {
+			$result = swap_and_make_html(&$numbers,$change_index);
+			$_SESSION['numbers'] = $numbers;
+		}
+		else {
+			$result = numbers_list_to_html($numbers);
+			$result.= '<br><b>Sort completed !!!</b>';
+		}
+	return '<div id="canvas_result_div">'.$result.'</div>';
+}
+
+function bublesort_form_submit($form,&$form_state) {
+}
+
+function rand_range($min, $max, $count){
+    $range = array();
+	$i=0;
+    while($i++ < $count){
+        while(in_array($num = mt_rand($min, $max), $range)){}
+        $range[] = $num;
+    }
+    return $range;
+}
+
+function numbers_list_to_html($numbers) {
+	$result = '';
+	foreach ($numbers as $number) {
+		$result = $result . '<div style="margin-top:5px;color:black;background-color:#FDFBA6;width:'.$number.'%;">' . $number . '</div>';
+	}
+	return $result;
+}
+
+function sort_action($numbers) {
+	for($i=(count($numbers)-1);$i>=0;$i--) {
+		for($j=0;$j<=($i-1);$j++) {
+			if($numbers[$j]>$numbers[$j+1]) {
+				return $j;
+			}
+		}
+	}
+	return NULL;
+}
+
+function swap_and_make_html($numbers,$index) {
+	$tmp = $numbers[$index];
+	$numbers[$index] = $numbers[$index+1];
+	$numbers[$index+1] = $tmp;	
+	
+	$result = '';
+	$i = 0;
+	foreach ($numbers as $number) {
+		$bkg_color = '#FDFBA6';
+		if($i==$index || $i == $index+1) {
+			$bkg_color = '#B8D942';
+		}
+		$i++;
+		$result = $result . '<div style="margin-top:5px;color:black;background-color:'.$bkg_color.';width:'.$number.'%;">' . $number . '</div>';
+	}
+	return $result;
+}

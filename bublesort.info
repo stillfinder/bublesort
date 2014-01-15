@@ -1,0 +1,6 @@
+; $Id$ 
+name = bublesort 
+description = bublesort lmodule. 
+package = BubleSort 
+version = 1 
+core = 7.x
